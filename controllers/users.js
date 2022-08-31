@@ -34,27 +34,31 @@ const logUser = async (req, res) => {
     const userEmail = await pool.query(`SELECT * FROM users WHERE email =$1`, [
       email,
     ]);
-    const user = userEmail.rows[0];
-    const user_id = userEmail.rows[0].u_id;
-    try {
-      if (user) {
-        bcrypt.compare(pass, user.pass, (err, isMatch) => {
-          if (err) {
-            res.send(err.message);
-          }
-          if (isMatch) {
-            res.header("auth-token", createToken(user_id)).send("Logged In");
-            // res.send("logged IN");
-          } else {
-            res.send("Either email or password incorrect!");
-          }
-        });
-      } else {
-        res.send("Either email or password incorrect!");
+    if (userEmail.rowCount > 0) {
+      const user = userEmail.rows[0];
+      const user_id = userEmail.rows[0].u_id;
+      try {
+        if (user) {
+          bcrypt.compare(pass, user.pass, (err, isMatch) => {
+            if (err) {
+              res.send(err.message);
+            }
+            if (isMatch) {
+              res.header("auth-token", createToken(user_id)).send("Logged In");
+              // res.send("logged IN");
+            } else {
+              res.send("Either email or password incorrect!");
+            }
+          });
+        } else {
+          res.send("Either email or password incorrect!");
+        }
+      } catch (err) {
+        console.log(err.message);
+        res.send(err.message);
       }
-    } catch (err) {
-      console.log(err.message);
-      res.send(err.message);
+    } else {
+      res.status(404).send("email or password not correct!");
     }
   } else {
     res.send("email or password cannot be empty");
