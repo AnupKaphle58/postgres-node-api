@@ -1,0 +1,9 @@
+CREATE DATABASE library;
+
+CREATE TABLE users(
+    u_id VARCHAR PRIMARY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    email VARCHAR(150) PRIMARY NOT NULL,
+    pass VARCHAR(150) NOT NULL
+);
