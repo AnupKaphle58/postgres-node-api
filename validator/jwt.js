@@ -1,16 +1,20 @@
 import jwt from "jsonwebtoken";
 
-const createToken = (userId) => {
+const createToken = (userId, email, password) => {
   const options = {
-    expiresIn: 60,
+    expiresIn: 60 * 60,
   };
-  const token = jwt.sign({ userId }, process.env.JWT_TOKEN, options);
+  const token = jwt.sign(
+    { userId, email, password },
+    process.env.JWT_TOKEN,
+    options
+  );
   return token;
 };
 
 const refreshToken = (userId) => {
   const options = {
-    expiresIn: "1y",
+    expiresIn: "1m",
   };
   const token = jwt.sign({ userId }, process.env.REFRESH_TOKEN, options);
   return token;
@@ -26,7 +30,7 @@ const verifyToken = (req, res, next) => {
     req.user = verified;
     next();
   } catch (err) {
-    res.redirect("/users/login");
+    res.send(err);
   }
 };
 

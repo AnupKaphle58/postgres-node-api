@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 
 import pool from "../database/db.js";
-import { createToken } from "../validator/jwt.js";
+import { createToken, refreshToken } from "../validator/jwt.js";
 import registrationValidation from "../validator/user-details.js";
 
 const createUser = async (req, res) => {
@@ -13,7 +13,7 @@ const createUser = async (req, res) => {
     // const { first_name, last_name, email } = req.body;
     const pass = await bcrypt.hash(result.pass, 10);
     const user = await pool.query(
-      "INSERT INTO users (u_id, first_name, last_name, email, pass) VALUES ($1, $2, $3, $4, $5)",
+      "INSERT INTO users (user_id, first_name, last_name, email, pass) VALUES ($1, $2, $3, $4, $5)",
       [u_id, result.first_name, result.last_name, result.email, pass]
     );
     res.send("User Created");
@@ -36,7 +36,7 @@ const logUser = async (req, res) => {
     ]);
     if (userEmail.rowCount > 0) {
       const user = userEmail.rows[0];
-      const user_id = userEmail.rows[0].u_id;
+      const user_id = userEmail.rows[0].user_id;
       try {
         if (user) {
           bcrypt.compare(pass, user.pass, (err, isMatch) => {
@@ -44,8 +44,12 @@ const logUser = async (req, res) => {
               res.send(err.message);
             }
             if (isMatch) {
-              res.header("auth-token", createToken(user_id)).send("Logged In");
-              // res.send("logged IN");
+              res
+                .header({
+                  "auth-token": createToken(user_id, email, pass),
+                  "refresh-token": refreshToken(user_id),
+                })
+                .redirect(`/users/books/${user_id}`);
             } else {
               res.send("Either email or password incorrect!");
             }
@@ -54,7 +58,6 @@ const logUser = async (req, res) => {
           res.send("Either email or password incorrect!");
         }
       } catch (err) {
-        console.log(err.message);
         res.send(err.message);
       }
     } else {
@@ -65,8 +68,16 @@ const logUser = async (req, res) => {
   }
 };
 
-const getBooks = (req, res) => {
-  res.send("This is a private page");
+const getBooks = async (req, res) => {
+  const books = await pool.query(
+    `SELECT book_id, book_name, author FROM bookslend WHERE email = $1`,
+    [req.user.email]
+  );
+  if (books.rows.length > 0) {
+    res.send(books.rows);
+  } else {
+    res.send("You have no books");
+  }
 };
 
 export default { createUser, logUser, getBooks };

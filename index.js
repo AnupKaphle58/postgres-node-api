@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 
 import pool from "./database/db.js";
 import userRoutes from "./routes/users.js";
+import bookRoutes from "./routes/books.js";
+
 dotenv.config();
 const app = express();
 const port = process.env.PORT || 5000;
@@ -13,6 +15,7 @@ app.use(express.json());
 app.use(helmet());
 
 app.use("/users", userRoutes);
+app.use(bookRoutes);
 // app.use("/admin", adminRoutes);
 
 app.get("/", async (req, res) => {
